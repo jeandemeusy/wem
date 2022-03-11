@@ -1,14 +1,14 @@
+from typing import Iterator, Tuple
 import scrapy
 
 
 class Crawler(scrapy.Spider):
-    def __init__(self, name: str, start_urls: list[str]):
-        self.name = name
-        self.start_urls = start_urls
+    name = "quotes"
+    start_urls = [
+        "https://quotes.toscrape.com/page/1/",
+        "https://quotes.toscrape.com/page/2/",
+    ]
 
-    def parse(self, response):
-        for title in response.css(".oxy-post-title"):
-            yield {"title": title.css("::text").get()}
 
-        for next_page in response.css("a.next"):
-            yield response.follow(next_page, self.parse)
+def parse(self, response):
+    print(response.css("title::text").get())
