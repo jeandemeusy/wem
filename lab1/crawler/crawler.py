@@ -3,16 +3,20 @@ import scrapy
 
 class Crawler(scrapy.Spider):
     name = "huff_scrap"
-    base_url = "https://www.huffpost.com/news"
 
     # start_urls = [f"https://www.huffpost.com/news/?page={page}" for page in range(69)]
     start_urls = ["https://www.huffpost.com/news"]
 
-    def parse(self, response):
+    # def __init__(self):
+    #     super.__init__(name=Crawler.name, start_urls=Crawler.start_urls)
+    #     self.page_number = 0
 
-        for title in response.css(".card__headlines"):
-            print(title)
-            yield {"title": title.css("::text").get()}
+    def parse(self, response):
+        for page in response.css("div.card--standard"):
+            if author := page.css("div.card__byline__author__name-title::text").get():
+                yield {"title": page.css("h3.card__headline__text::text").get(),
+                       "description": page.css("div.card__description::text").get(),
+                       "author": author}
 
         for next_page in response.css("a.pagination__next-link"):
             # This is a recursive function that will call the `parse` function until there are no more
