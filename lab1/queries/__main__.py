@@ -1,24 +1,33 @@
-import json
-from datetime import datetime
-from pathlib import Path
-from pprint import pprint
-
-from elasticsearch_dsl import Document, Date, Integer, Keyword, Text, connections
-
 import click
-from .article import Article
+from elasticsearch import Elasticsearch
+from elasticsearch_dsl import Search, connections
 
-# Define a default Elasticsearch client
+
 @click.command()
-@click.option("-f", "--field", type=str, required=True)
-@click.option("-t", "--text", type=str, required=True)
+@click.option("-f", "--field", help="field to make a query on", type=str, required=True)
+@click.option("-t", "--text", help="text to query", type=str, required=True)
 def query(field: str, text: str):
 
-    print(f"{field=}")
-    print(f"{text=}")
+    client = Elasticsearch()
 
-    article = Article.get(id=6)
-    print(article.title)
+    s: Search = Search(using=client, index="huffpost")
+
+    if field == "title":
+        s = s.query("match", title=text)
+    elif field == "description":
+        s = s.query("match", description=text)
+    elif field == "author":
+        s = s.query("match", author=text)
+    else:
+        print(f"Unknown query field '{field}'")
+        return
+
+    s.aggs.bucket("per_tag", "terms", field="tags")
+
+    response = s.execute()
+
+    for hit in response:
+        print(f"{hit.meta.score:.2f}", hit.title)
 
 
 if __name__ == "__main__":
