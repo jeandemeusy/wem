@@ -9,7 +9,7 @@ from article import Article
 # Define a default Elasticsearch client
 connections.create_connection(hosts=["localhost"])
 
-file = Path("../../lab1/crawler/quotes.json")
+file = Path("../crawler/quotes.json")
 
 with open(file, "r") as f:
     page_scrawler = json.load(f)
