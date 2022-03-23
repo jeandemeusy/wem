@@ -1,4 +1,4 @@
-from elasticsearch_dsl import Document, Date, Integer, Keyword, Text, connections
+from elasticsearch_dsl import Document, Keyword, Text
 
 
 class Article(Document):
