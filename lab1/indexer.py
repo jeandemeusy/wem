@@ -1,15 +1,14 @@
 import json
-from datetime import datetime
 from pathlib import Path
 from pprint import pprint
 
-from elasticsearch_dsl import Document, Date, Integer, Keyword, Text, connections
-from article import Article
+from elasticsearch_dsl import connections
+from queries.article import Article
 
 # Define a default Elasticsearch client
 connections.create_connection(hosts=["localhost"])
 
-file = Path("../../lab1/crawler/quotes.json")
+file = Path("quotes.json")
 
 with open(file, "r") as f:
     page_scrawler = json.load(f)

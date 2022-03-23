@@ -4,7 +4,6 @@ import scrapy
 class Crawler(scrapy.Spider):
     name = "huff_scrap"
 
-    # start_urls = [f"https://www.huffpost.com/news/?page={page}" for page in range(69)]
     start_urls = ["https://www.huffpost.com/news"]
 
     # def __init__(self):
@@ -14,9 +13,11 @@ class Crawler(scrapy.Spider):
     def parse(self, response):
         for page in response.css("div.card--standard"):
             if author := page.css("div.card__byline__author__name-title::text").get():
-                yield {"title": page.css("h3.card__headline__text::text").get(),
-                       "description": page.css("div.card__description::text").get(),
-                       "author": author}
+                yield {
+                    "title": page.css("h3.card__headline__text::text").get(),
+                    "description": page.css("div.card__description::text").get(),
+                    "author": author,
+                }
 
         for next_page in response.css("a.pagination__next-link"):
             # This is a recursive function that will call the `parse` function until there are no more
