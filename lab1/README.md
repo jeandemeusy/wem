@@ -28,7 +28,10 @@ Le crawler s'exécute comme cela:
 > scrapy runspider crawler.py
 ```
 
-TODO: comment les objets se retrouvent dans le fichier quotes.json 
+Pour enregistrer les résultats du crawler:
+```python
+> scrapy runspider crawler.py -O quotes.json
+```
 
 Tout les objets retenus lors du crawling sont stockés dans le fichier `quotes.json`, que l'indexer utilise comme source de données.
 
