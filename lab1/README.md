@@ -50,6 +50,10 @@ Effectuer une requête sur l'index d'ElasticSearch se fait comme ceci:
 ```bash
 > python -m queries --field <field> --text <text>
 ```
+ou 
+```bash
+> python -m queries -f <field> -t <text>
+```
 
 où:
 - `field` est le champ sur lequel on souhaite faire la requête. Dans notre cas il peut être "title", "description" ou "author",
@@ -61,3 +65,4 @@ Voici quelques exemples de requêtes:
 > python -m queries --field description --text "russia"
 > python -m queries --field author --text "sara boboltz"
 ```
+
