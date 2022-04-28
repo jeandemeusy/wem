@@ -22,6 +22,3 @@ Outils
 Visualisation
 - WebMiner
 - (Web ?)
-
-
-les bouboules
