@@ -41,8 +41,14 @@ def RSS_content(
         content_dict[hashed] = " ".join(decoded_texts)
 
     if outfile:
-        with open(outfile, "w+") as f:
-            json.dump(content_dict, f)
+        try:
+            with open(outfile, "r") as f:
+                content_dict.extend(json.load(f))
+        except FileNotFoundError as e:
+            print(f"No data to merge from {outfile}")
+        finally:
+            with open(outfile, "w") as f:
+                json.dump(content_dict, f)
 
     print("\t...Done")
     return content_dict
@@ -88,33 +94,33 @@ if __name__ == "__main__":
         "https://www.dailymail.co.uk/news/index.rss",
         outfile="items_dailymail.json",
     )
-    RSS_content(
-        feed=daily_feed,
-        outfile="content_daily.json",
-        tag="p",
-        class_attr="mol-para-with-font",
-    )
+    # RSS_content(
+    #     feed=daily_feed,
+    #     outfile="content_daily.json",
+    #     tag="p",
+    #     class_attr="mol-para-with-font",
+    # )
 
     # THE GUARDIAN
     guardian_feed = RSS_feed(
         "https://www.theguardian.com/international/rss",
         outfile="items_guardian.json",
     )
-    RSS_content(
-        feed=guardian_feed,
-        outfile="content_guardain.json",
-        tag="p",
-        class_attr="dcr-xry7m2",
-    )
+    # RSS_content(
+    #     feed=guardian_feed,
+    #     outfile="content_guardain.json",
+    #     tag="p",
+    #     class_attr="dcr-xry7m2",
+    # )
 
     # HUFFINGTONPOST
     huffpost_feed = RSS_feed(
         "https://www.huffingtonpost.co.uk/feeds/index.xml",
         outfile="items_huffpost.json",
     )
-    RSS_content(
-        feed=huffpost_feed,
-        outfile="content_huffpost.json",
-        tag="div",
-        class_attr="primary-cli cli cli-text",
-    )
+    # RSS_content(
+    #     feed=huffpost_feed,
+    #     outfile="content_huffpost.json",
+    #     tag="div",
+    #     class_attr="primary-cli cli cli-text",
+    # )
