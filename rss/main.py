@@ -5,11 +5,17 @@ from xml.etree import ElementTree as etree
 import requests
 import unidecode
 from bs4 import BeautifulSoup
+import sys
+from pathlib import Path
+
+# usage:
+# python3 rss/main.py <outfolder>
+# folder should exists
 
 
 def RSS_content(
     infile: str = None,
-    outfile: str = None,
+    outfile: Path = None,
     feed: dict = None,
     tag: str = None,
     class_attr: str = None,
@@ -29,32 +35,39 @@ def RSS_content(
 
     content_dict = {}
 
-    for f in feed:
-        r = requests.get(f["link"])
-        soup = BeautifulSoup(r.text, "html.parser")
+    for idx, f in enumerate(feed):
+        if f["link"]:
+            r = requests.get(f["link"])
+            soup = BeautifulSoup(r.text, "html.parser")
 
-        texts = soup.find_all(tag, attrs={"class": class_attr})
+            texts = soup.find_all(tag, attrs={"class": class_attr})
 
-        hashed = hashlib.sha224(f["link"].encode("utf-8")).hexdigest()
+            hashed = hashlib.sha224(f["link"].encode("utf-8")).hexdigest()
 
-        decoded_texts = [unidecode.unidecode(t.text).replace('"', "'") for t in texts]
-        content_dict[hashed] = " ".join(decoded_texts)
+            decoded_texts = [
+                unidecode.unidecode(t.text).replace('"', "'") for t in texts
+            ]
+            content_dict[hashed] = " ".join(decoded_texts)
+
+        print(f"{idx}/{len(feed)}", end="\r")
 
     if outfile:
         try:
-            with open(outfile, "r") as f:
-                content_dict.extend(json.load(f))
+            with open(str(outfile), "r") as f:
+                content_dict = dict(
+                    list(content_dict.items()) + list(json.load(f).items())
+                )
         except FileNotFoundError as e:
-            print(f"No data to merge from {outfile}")
+            print(f"No data to merge from {str(outfile)}")
         finally:
-            with open(outfile, "w") as f:
+            with open(str(outfile), "w") as f:
                 json.dump(content_dict, f)
 
     print("\t...Done")
     return content_dict
 
 
-def RSS_feed(url: str, outfile: str = None):
+def RSS_feed(url: str, outfile: Path = None):
     """
     Get the RSS feed from the given URL.
     """
@@ -75,52 +88,60 @@ def RSS_feed(url: str, outfile: str = None):
 
         feed.append(e)
 
+    new_feed = [f for f in feed]
+
     if outfile:
         try:
-            with open(outfile, "r") as f:
+            with open(str(outfile), "r") as f:
                 feed.extend(json.load(f))
         except FileNotFoundError as e:
-            print(f"No data to merge from {outfile}")
+            print(f"No data to merge from {str(outfile)}")
         finally:
-            with open(outfile, "w") as f:
+            with open(str(outfile), "w") as f:
                 json.dump(feed, f)
 
-    return feed
+    return feed, new_feed
 
 
 if __name__ == "__main__":
+
+    folder = Path(".")
+    if len(sys.argv) == 2:
+        folder = Path(sys.argv[1])
+
     # DAILY MAIL
-    daily_feed = RSS_feed(
+    _, daily_feed = RSS_feed(
         "https://www.dailymail.co.uk/news/index.rss",
-        outfile="items_dailymail.json",
+        outfile=folder.joinpath("items_dailymail.json"),
     )
-    # RSS_content(
-    #     feed=daily_feed,
-    #     outfile="content_daily.json",
-    #     tag="p",
-    #     class_attr="mol-para-with-font",
-    # )
+
+    RSS_content(
+        feed=daily_feed,
+        outfile=folder.joinpath("content_daily.json"),
+        tag="p",
+        class_attr="mol-para-with-font",
+    )
 
     # THE GUARDIAN
-    guardian_feed = RSS_feed(
+    _, guardian_feed = RSS_feed(
         "https://www.theguardian.com/international/rss",
-        outfile="items_guardian.json",
+        outfile=folder.joinpath("items_guardian.json"),
     )
-    # RSS_content(
-    #     feed=guardian_feed,
-    #     outfile="content_guardain.json",
-    #     tag="p",
-    #     class_attr="dcr-xry7m2",
-    # )
+    RSS_content(
+        feed=guardian_feed,
+        outfile=folder.joinpath("content_guardain.json"),
+        tag="p",
+        class_attr="dcr-xry7m2",
+    )
 
     # HUFFINGTONPOST
-    huffpost_feed = RSS_feed(
+    _, huffpost_feed = RSS_feed(
         "https://www.huffingtonpost.co.uk/feeds/index.xml",
-        outfile="items_huffpost.json",
+        outfile=folder.joinpath("items_huffpost.json"),
     )
-    # RSS_content(
-    #     feed=huffpost_feed,
-    #     outfile="content_huffpost.json",
-    #     tag="div",
-    #     class_attr="primary-cli cli cli-text",
-    # )
+    RSS_content(
+        feed=huffpost_feed,
+        outfile=folder.joinpath("content_huffpost.json"),
+        tag="div",
+        class_attr="primary-cli cli cli-text",
+    )
