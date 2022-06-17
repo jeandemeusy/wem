@@ -39,7 +39,6 @@ def RSS_content(
         if f["link"]:
             r = requests.get(f["link"])
             soup = BeautifulSoup(r.text, "html.parser")
-
             texts = soup.find_all(tag, attrs={"class": class_attr})
 
             hashed = hashlib.sha224(f["link"].encode("utf-8")).hexdigest()
@@ -48,7 +47,7 @@ def RSS_content(
                 unidecode.unidecode(t.text).replace('"', "'") for t in texts
             ]
             content_dict[hashed] = " ".join(decoded_texts)
-
+            
         print(f"{idx}/{len(feed)}", end="\r")
 
     if outfile:
@@ -145,3 +144,17 @@ if __name__ == "__main__":
         tag="div",
         class_attr="primary-cli cli cli-text",
     )
+
+    # REUTERS
+    _, reuters_feed = RSS_feed(
+        "https://www.reuters.com/news/rss/topnews",
+        outfile=folder.joinpath("items_reuters.json"),
+    )
+    RSS_content(
+        feed=reuters_feed,
+        outfile=folder.joinpath("content_reuters.json"),
+        tag="p",
+        class_attr="StandardArticleBody_body_1",
+    )
+
+

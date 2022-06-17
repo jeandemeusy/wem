@@ -29,15 +29,16 @@ def RSS_content(
     content_dict = {}
 
     for idx, f in enumerate(feed):
-        r = requests.get(f["link"])
-        soup = BeautifulSoup(r.text, "html.parser")
+        if f["link"]:
+            r = requests.get(f["link"])
+            soup = BeautifulSoup(r.text, "html.parser")
 
-        texts = soup.find_all(tag, attrs={"class": class_attr})
+            texts = soup.find_all(tag, attrs={"class": class_attr})
 
-        hashed = hashlib.sha224(f["link"].encode("utf-8")).hexdigest()
+            hashed = hashlib.sha224(f["link"].encode("utf-8")).hexdigest()
 
-        decoded_texts = [unidecode.unidecode(t.text).replace('"', "'") for t in texts]
-        content_dict[hashed] = " ".join(decoded_texts)
+            decoded_texts = [unidecode.unidecode(t.text).replace('"', "'") for t in texts]
+            content_dict[hashed] = " ".join(decoded_texts)
 
         print(f"{idx}/{len(feed)}", end="\r")
 
@@ -52,7 +53,7 @@ def RSS_content(
 if __name__ == "__main__":
     daily_content = RSS_content(
         infile="items_dailymail.json",
-        # outfile="content_daily.json",
+        outfile="content_daily2.json",
         tag="p",
         class_attr="mol-para-with-font",
     )
@@ -60,7 +61,7 @@ if __name__ == "__main__":
     # THE GUARDIAN
     guardian_content = RSS_content(
         infile="items_guardian.json",
-        # outfile="content_guardain.json",
+        outfile="content_guardian2.json",
         tag="p",
         class_attr="dcr-xry7m2",
     )
@@ -68,7 +69,7 @@ if __name__ == "__main__":
     # HUFFINGTONPOST
     huffpost_content = RSS_content(
         infile="items_huffpost.json",
-        # outfile="content_huffpost.json",
+        outfile="content_huffpost2.json",
         tag="div",
         class_attr="primary-cli cli cli-text",
     )
