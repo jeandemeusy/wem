@@ -28,23 +28,71 @@ app = Dash(__name__)
 
 with open("topics.json") as f:
     data = json.load(f)
+    
+with open("daily_topics.json") as f:
+    data_daily = json.load(f)
 
+with open("guardian_topics.json") as f:
+    data_guardian = json.load(f)
+
+with open("huffpost_topics.json") as f:
+    data_huffpost = json.load(f)
+
+
+df_daily = pd.DataFrame([data_daily])
+df_guardian = pd.DataFrame([data_guardian])
+df_huffpost = pd.DataFrame([data_huffpost])
 df = pd.DataFrame([data])
 
-df_graph = pd.DataFrame(df["mdsDat"][0])
-df_graph['Freq'] = np.log(df_graph['Freq']+1)
+freq_copy_daily = (df_daily["mdsDat"][0]["Freq"]).copy()
+freq_copy_huffpost = (df_huffpost["mdsDat"][0]["Freq"]).copy()
+freq_copy_guardian = (df_guardian["mdsDat"][0]["Freq"]).copy()
+
+df_graph = pd.DataFrame(df_daily["mdsDat"][0])
+
+for i in range(len(df_daily["topic.order"][0])):
+    correct_index_daily = df_daily["topic.order"][0][i]
+    df_daily["mdsDat"][0]['Freq'][correct_index_daily-1] = freq_copy_daily[i]
+
+    correct_index_huffpost = df_huffpost["topic.order"][0][i]
+    df_huffpost["mdsDat"][0]['Freq'][correct_index_huffpost-1] = freq_copy_huffpost[i]
+
+    correct_index_guardian = df_guardian["topic.order"][0][i]
+    df_guardian["mdsDat"][0]['Freq'][correct_index_guardian-1] = freq_copy_guardian[i]
+
+for i in range(len(df_daily["mdsDat"][0]['Freq'])):
+    df_graph['Freq'][i] = np.log((df_daily["mdsDat"][0]['Freq'][i] + df_huffpost["mdsDat"][0]['Freq'][i] + df_guardian["mdsDat"][0]['Freq'][i])/3+2)
+
+df_graph["Freq_daily"] = df_daily["mdsDat"][0]['Freq']
+df_graph["Freq_huffpost"] = df_huffpost["mdsDat"][0]['Freq']
+df_graph["Freq_guardian"] = df_guardian["mdsDat"][0]['Freq']
 
 df_bar = pd.DataFrame(df["tinfo"][0])
 df_bar.to_json('test.json')
 # df_bar_split = pd.DataFrame({'Term': df["tinfo"][0]['Term'], 'Category': df['tinfo'][0]['Category']})
 # print(df_bar_split)
 
+# Get first topic index
 dupes = df_bar['Category'].duplicated('first')
 dupes = [not elem for elem in dupes]
-my_topic = df_bar['Category'][dupes].index
-print_full(my_topic)
-# my_topic = df_bar['Category']['Topic1'].index
-# print(my_topic)
+start_topic_index = df_bar['Category'][dupes].index
+
+# Get last topic index
+dupes = df_bar['Category'].duplicated('last')
+dupes = [not elem for elem in dupes]
+end_topic_index = df_bar['Category'][dupes].index
+
+topic1 = df_bar['Term'][start_topic_index[1]:end_topic_index[1]+1]
+topic2 = df_bar['Term'][start_topic_index[2]:end_topic_index[2]+1]
+topic3 = df_bar['Term'][start_topic_index[3]:end_topic_index[3]+1]
+topic4 = df_bar['Term'][start_topic_index[4]:end_topic_index[4]+1]
+topic5 = df_bar['Term'][start_topic_index[5]:end_topic_index[5]+1]
+topic6 = df_bar['Term'][start_topic_index[6]:end_topic_index[6]+1]
+topic7 = df_bar['Term'][start_topic_index[7]:end_topic_index[7]+1]
+topic8 = df_bar['Term'][start_topic_index[8]:end_topic_index[8]+1]
+topic9 = df_bar['Term'][start_topic_index[9]:end_topic_index[9]+1]
+topic10 = df_bar['Term'][start_topic_index[10]:end_topic_index[10]+1]
+
 
 fig_scatter = px.scatter(df_graph,
                          x="x",
@@ -52,6 +100,15 @@ fig_scatter = px.scatter(df_graph,
                          size="Freq",
                          color="topics",
                          hover_name="topics",
+                         hover_data={'x':False,
+                                    'y':False, 
+                                    'Freq':False, 
+                                    'topics': False, 
+                                    'Freq_daily' : True,
+                                    'Freq_huffpost' : True,
+                                    'Freq_guardian' :True
+                                    }
+                         
 )
 
 fig_bar = px.bar(df_bar,
@@ -60,19 +117,6 @@ fig_bar = px.bar(df_bar,
                  color="Category",
                  orientation='h',
 )
-
-# fig_scatter = go.Figure(data=[
-#     go.Scatter(
-#         x=data["x"],
-#         y=data["y"],
-#         mode='markers',
-#         marker=dict(
-#             size=data["Freq"],
-#             sizemode='area',
-#             sizeref=2.*max(data["Freq"]) / (200**2),
-#         )
-#     )
-# ])
 
 
 app.layout = html.Div([
@@ -97,11 +141,26 @@ app.layout = html.Div([
     )
 ])
 
-# @app.callback(
-#     Input('slider-topics', 'value'),
-#     Output('bar-topics', 'Figure'))
-# def update_bar(slider_topics):
-#     print()
+
+@app.callback(
+    Output('bar-topics', 'figure'),
+    Input('slider-topics', 'value')
+)
+def update_bar(slider_topic):
+    term_topic = df_bar['Term'][start_topic_index[slider_topic]:end_topic_index[slider_topic]+1]
+    freq_term_topic = df_bar['Freq'][start_topic_index[slider_topic]:end_topic_index[slider_topic]+1]
+    dff = pd.DataFrame({'Term': term_topic, 'Freq': freq_term_topic})
+    dff.sort_values(by='Freq', ascending=False, inplace=True)
+    dff = dff.head(10)
+    dff.sort_values(by='Freq', ascending=True, inplace=True)
+    print(dff)
+    fig = px.bar(
+                 x=dff['Freq'],
+                 y=dff['Term'],
+                 orientation='h',
+    )
+    return fig
+
 
 if __name__ == "__main__":
     app.run_server(debug=True)
