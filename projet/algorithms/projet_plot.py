@@ -3,8 +3,7 @@ import plotly.express as px
 import pandas as pd
 import numpy as np
 import json
-from pprint import pprint
-import plotly.graph_objects as go
+from natsort import index_natsorted
 
 
 def print_full(x):
@@ -72,12 +71,38 @@ df_graph["Freq_huffpost"] = df_huffpost["mdsDat"][0]['Freq']
 df_graph["Freq_guardian"] = df_guardian["mdsDat"][0]['Freq']
 
 df_bar_test = pd.DataFrame(df_test["tinfo"][0])
+
 df_bar_daily = pd.DataFrame(df_daily["tinfo"][0])
+website = ["daily" for i in range(len(df_bar_daily['Category']))]
+df_bar_daily['website'] = website
+# df_bar_daily.drop(df_bar_daily[df_bar_daily['Category'] == 'Default'].index, inplace=True)
+
 df_bar_huffpost = pd.DataFrame(df_huffpost["tinfo"][0])
+website = ["huffpost" for i in range(len(df_bar_huffpost['Category']))]
+df_bar_huffpost['website'] = website
+# df_bar_huffpost.drop(df_bar_huffpost[df_bar_huffpost['Category'] == 'Default'].index, inplace=True)
+
 df_bar_guardian = pd.DataFrame(df_guardian["tinfo"][0])
+website = ["guardian" for i in range(len(df_bar_guardian['Category']))]
+df_bar_guardian['website'] = website
+# df_bar_guardian.drop(df_bar_guardian[df_bar_guardian['Category'] == 'Default'].index, inplace=True)
+
+concat_all = [df_bar_daily, df_bar_huffpost, df_bar_guardian]
+# df_bar_all = pd.merge(df_bar_daily, df_bar_huffpost, how='left', on='Category')
+df_bar_all = pd.concat(concat_all, ignore_index=True)
+df_bar_all.sort_values(by=['Category'], inplace=True, key=lambda x: np.argsort(index_natsorted(df_bar_all['Category'])))
+
+# df_bar_all.sort_values(by=['Category'], inplace=True, ascending=True)
+# print_full(df_bar_all)
+
+# df_bar_all.to_json('test.json')
 # df_bar_test.to_json('test.json')
 # df_bar_split = pd.DataFrame({'Term': df["tinfo"][0]['Term'], 'Category': df['tinfo'][0]['Category']})
 # print(df_bar_split)
+
+df_bar_all.drop(df_bar_all[df_bar_all['Category'] == 'Default'].index, inplace=True)
+# df_bar_all.to_json('test.json')
+
 
 # For each topic get the first index
 dupes = df_bar_test['Category'].duplicated('first')
@@ -116,19 +141,14 @@ dupes = df_bar_guardian['Category'].duplicated('last')
 dupes = [not elem for elem in dupes]
 end_topic_index_df_guardian = df_bar_guardian['Category'][dupes].index
 
+# Same for All
+dupes = df_bar_all['Category'].duplicated('first')
+dupes = [not elem for elem in dupes]
+start_topic_index_df_all = df_bar_all['Category'][dupes].index
 
-# Creating a list of the terms for each topic.
-topic1 = df_bar_test['Term'][start_topic_index_testdf[1]:end_topic_index_testdf[1]+1]
-topic2 = df_bar_test['Term'][start_topic_index_testdf[2]:end_topic_index_testdf[2]+1]
-topic3 = df_bar_test['Term'][start_topic_index_testdf[3]:end_topic_index_testdf[3]+1]
-topic4 = df_bar_test['Term'][start_topic_index_testdf[4]:end_topic_index_testdf[4]+1]
-topic5 = df_bar_test['Term'][start_topic_index_testdf[5]:end_topic_index_testdf[5]+1]
-topic6 = df_bar_test['Term'][start_topic_index_testdf[6]:end_topic_index_testdf[6]+1]
-topic7 = df_bar_test['Term'][start_topic_index_testdf[7]:end_topic_index_testdf[7]+1]
-topic8 = df_bar_test['Term'][start_topic_index_testdf[8]:end_topic_index_testdf[8]+1]
-topic9 = df_bar_test['Term'][start_topic_index_testdf[9]:end_topic_index_testdf[9]+1]
-topic10 = df_bar_test['Term'][start_topic_index_testdf[10]:end_topic_index_testdf[10]+1]
-
+dupes = df_bar_all['Category'].duplicated('last')
+dupes = [not elem for elem in dupes]
+end_topic_index_df_all = df_bar_all['Category'][dupes].index
 
 # Creating a scatter plot with dataframe df_graph.
 fig_scatter = px.scatter(df_graph,
@@ -184,6 +204,15 @@ fig_bar_guardian = px.bar(df_bar_guardian,
                           orientation='h',
 )
 
+fig_bar_all = px.bar(df_bar_all,
+                     title="All datasets",
+                     x="Term",
+                     y="Freq",
+                     color="website",
+                     barmode="stack",
+                     height=1000,
+)
+
 
 app.layout = html.Div([
     html.Div(
@@ -195,16 +224,6 @@ app.layout = html.Div([
             "display": "inline-block",
         }
     ),
-    # html.Div(
-    #     [
-    #         dcc.Graph(id='bar-topics-test', figure=fig_bar_test),
-    #         dcc.Slider(1, 10, 1, value=1, id='slider-topics'),
-    #     ],
-    #     style={
-    #         "width": "50%",
-    #         "display": "inline-block",
-    #     }
-    # ),
     html.Div(
         [
             dcc.Graph(id='bar-topics-daily', figure=fig_bar_daily),
@@ -234,7 +253,16 @@ app.layout = html.Div([
     ),
     html.Div(
         [
-            dcc.Slider(1, 10, 1, value=1, id='slider-topics')
+            dcc.Slider(1, 18, 1, value=1, id='slider-topics')
+        ],
+        style={
+            "width": "100%",
+            "display": "inline-block",
+        }
+    ),
+    html.Div(
+        [
+            dcc.Graph(id='bar-topics-all', figure=fig_bar_all),
         ],
         style={
             "width": "100%",
@@ -245,24 +273,6 @@ app.layout = html.Div([
 
 def update(topic_select, df):
     pass
-
-# @app.callback(
-#     Output('bar-topics-test', 'figure'),
-#     Input('slider-topics', 'value')
-# )
-# def update_bar_test(slider_topic):
-#     term_topic = df_bar_test['Term'][start_topic_index_testdf[slider_topic]:end_topic_index_testdf[slider_topic]+1]
-#     freq_term_topic = df_bar_test['Freq'][start_topic_index_testdf[slider_topic]:end_topic_index_testdf[slider_topic]+1]
-#     dff = pd.DataFrame({'Term': term_topic, 'Freq': freq_term_topic})
-#     dff.sort_values(by='Freq', ascending=False, inplace=True)
-#     dff = dff.head(10)
-#     dff.sort_values(by='Freq', ascending=True, inplace=True)
-#     fig = px.bar(
-#                  x=dff['Freq'],
-#                  y=dff['Term'],
-#                  orientation='h',
-#     )
-#     return fig
 
 @app.callback(
     Output('bar-topics-daily', 'figure'),
@@ -320,6 +330,27 @@ def update_bar_guardian(slider_topic):
         orientation='h',
     )
     return fig
+
+# @app.callback(
+#     Output('bar-topics-all', 'figure'),
+#     Input('slider-topics', 'value')
+# )
+# def update_bar_all(slider_topic):
+#     term_topic = df_bar_all['Term'][start_topic_index_df_all[slider_topic]:end_topic_index_df_all[slider_topic]+1]
+#     freq_term_topic = df_bar_all['Freq'][start_topic_index_df_all[slider_topic]:end_topic_index_df_all[slider_topic]+1]
+#     website_topic = df_bar_all['website'][start_topic_index_df_all[slider_topic]:end_topic_index_df_all[slider_topic]+1]
+#     dff = pd.DataFrame({'Term': term_topic, 'Freq': freq_term_topic, 'website': website_topic})
+#     dff.sort_values(by='Freq', ascending=False, inplace=True)
+#     dff = dff.head(100)
+#     dff.sort_values(by='Freq', ascending=True, inplace=True)
+#     fig = px.bar(
+#         title="All dataset",
+#         x=dff['Term'],
+#         y=dff['Freq'],
+#         color=dff['website'],
+#         barmode='group',
+#     )
+#     return fig
 
 
 if __name__ == "__main__":
