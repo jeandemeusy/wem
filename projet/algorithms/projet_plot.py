@@ -290,6 +290,7 @@ def update_bar_daily(slider_topic):
         x=dff['Freq'],
         y=dff['Term'],
         orientation='h',
+        labels={'x': 'Frequency', 'y': 'Term'},
     )
     return fig
 
@@ -309,6 +310,7 @@ def update_bar_huffpost(slider_topic):
         x=dff['Freq'],
         y=dff['Term'],
         orientation='h',
+        labels={'x': 'Frequency', 'y': 'Term'},
     )
     return fig
 
@@ -328,6 +330,7 @@ def update_bar_guardian(slider_topic):
         x=dff['Freq'],
         y=dff['Term'],
         orientation='h',
+        labels={'x': 'Frequency', 'y': 'Term'},
     )
     return fig
 
